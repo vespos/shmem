@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class Worker(object):
     def __init__(self, run=None, rank=None):
-        run = 26
+        run = 272
         dsname = utils.get_ds(run=run,
                               exp=config.EXP,
                               live=config.LIVE,
@@ -63,24 +63,25 @@ class Worker(object):
                 try:
                     img = [det.calib(evt) for det in self.epixs]
                     imgar = np.array(img)
-                except:
-                    continue
                 
-                imgAssembled = np.bincount(
-                    self.ind2d,
-                    weights=imgar.flatten(),
-                    minlength=(self.outShape[0]*self.outShape[1])).reshape(self.outShape[0], self.outShape[1])
+                    imgAssembled = np.bincount(
+                        self.ind2d,
+                        weights=imgar.flatten(),
+                        minlength=(self.outShape[0]*self.outShape[1])).reshape(self.outShape[0], self.outShape[1])
 
-                imgThres=imgAssembled.copy()
-                imgThres[imgThres<config.THRES]=0
-                    
-                if config.PHOT>0:
-                    imgPhot = photons(imgAssembled/config.PHOTON_ADU, self.mask2d.astype(np.uint8))
-                
-                sum_img += imgAssembled
-                sum_imgThres += imgThres
-                if config.PHOT>0:
-                    sum_imgPhot += imgPhot
+                    imgThres=imgAssembled.copy()
+                    imgThres[imgThres<config.THRES]=0
+
+                    if config.PHOT>0:
+                        imgPhot = photons(imgAssembled/config.PHOTON_ADU, self.mask2d.astype(np.uint8))
+
+                    sum_img += imgAssembled
+                    sum_imgThres += imgThres
+                    if config.PHOT>0:
+                        sum_imgPhot += imgPhot
+                except Exception as e:
+                    print('Could not analyze this shot:\n{}'.format(e))
+                    continue
 
                 neventsInBatch += 1
                 neventsInRank += 1
